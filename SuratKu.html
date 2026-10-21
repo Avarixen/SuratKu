@@ -1,0 +1,445 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Generator Surat Resmi (Fix Logo)</title>
+    <style>
+        :root {
+            --primary-color: #2c3e50;
+            --bg-color: #f4f4f4;
+            --paper-color: #ffffff;
+            --text-color: #333;
+        }
+
+        * { box-sizing: border-box; }
+
+        body {
+            font-family: 'Arial', sans-serif;
+            margin: 0;
+            padding: 15px;
+            background-color: var(--bg-color);
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            color: var(--text-color);
+        }
+
+        /* --- PANEL KIRI (FORM) --- */
+        .form-container {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            width: 100%;
+        }
+
+        .form-group { margin-bottom: 15px; }
+
+        label {
+            display: block;
+            font-size: 12px;
+            font-weight: bold;
+            margin-bottom: 5px;
+            color: #555;
+        }
+
+        input, textarea {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            font-size: 13px;
+            font-family: inherit;
+        }
+
+        textarea { resize: vertical; height: 80px; }
+
+        button {
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 12px;
+            border-radius: 4px;
+            cursor: pointer;
+            width: 100%;
+            font-size: 14px;
+            font-weight: bold;
+        }
+
+        button:hover { background-color: #1a252f; }
+
+        /* --- KOTAK PREVIEW LOGO DI FORM --- */
+        .logo-preview-box {
+            margin-top: 10px;
+            width: 100px;
+            height: 100px;
+            border: 1px dashed #ccc;
+            border-radius: 4px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+            background: #fafafa;
+            font-size: 10px;
+            color: #999;
+        }
+        .logo-preview-box img {
+            max-width: 100%;
+            max-height: 100%;
+            object-fit: contain;
+        }
+
+        /* --- PANEL KANAN (PREVIEW SURAT) --- */
+        .preview-wrapper {
+            width: 100%;
+            overflow-x: auto;
+            background: #dcdcdc;
+            padding: 15px;
+            border-radius: 8px;
+        }
+
+        .paper {
+            background: var(--paper-color);
+            width: 210mm;
+            min-height: 297mm;
+            padding: 20mm 25mm;
+            margin: 0 auto;
+            box-shadow: 0 0 10px rgba(0,0,0,0.2);
+            font-family: 'Times New Roman', Times, serif;
+            font-size: 12pt;
+            line-height: 1.5;
+            color: black;
+        }
+
+        /* Kop Surat */
+        .letterhead {
+            display: flex;
+            align-items: center;
+            border-bottom: 3px solid black;
+            padding-bottom: 10px;
+            margin-bottom: 20px;
+            min-height: 80px;
+        }
+
+        .logo-box {
+            width: 80px;
+            height: 80px;
+            margin-right: 15px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-shrink: 0;
+            border: 1px dashed #eee; /* Akan hilang jika ada logo */
+        }
+        
+        .logo-box img { max-width: 100%; max-height: 100%; object-fit: contain; }
+
+        .header-text { text-align: center; flex: 1; }
+        .header-text h1, .header-text h2, .header-text p { margin: 0; }
+        .header-text h1 { font-size: 16pt; font-weight: bold; text-transform: uppercase; }
+        .header-text h2 { font-size: 14pt; font-weight: bold; text-transform: uppercase; }
+        .header-text p { font-size: 10pt; white-space: pre-line; }
+
+        /* Tanggal & Info Surat */
+        .date-line { text-align: right; margin-bottom: 20px; min-height: 20px; }
+        .letter-info { margin-bottom: 15px; min-height: 60px; }
+        .letter-info table { width: 100%; }
+        .letter-info td { vertical-align: top; padding: 2px 0; }
+        .letter-info td:first-child { width: 80px; }
+
+        /* Isi Surat */
+        .content { text-align: justify; margin-bottom: 20px; min-height: 150px; }
+        .content p { margin-bottom: 10px; text-indent: 40px; white-space: pre-wrap; }
+        .content .no-indent { text-indent: 0; }
+
+        /* Detail Acara */
+        .event-details { margin-left: 40px; margin-bottom: 15px; display: none; }
+        .event-details table td { padding: 2px 5px; vertical-align: top; }
+        .event-details td:first-child { width: 70px; }
+
+        /* Tanda Tangan */
+        .signature {
+            float: right;
+            width: 250px;
+            text-align: center;
+            margin-top: 20px;
+            min-height: 100px;
+        }
+        .signature-space { height: 70px; }
+        .signature-name { font-weight: bold; text-decoration: underline; }
+
+        /* --- MEDIA QUERY: LAPTOP --- */
+        @media (min-width: 768px) {
+            body {
+                flex-direction: row;
+                height: 100vh;
+                overflow: hidden;
+            }
+            .form-container {
+                width: 380px;
+                flex-shrink: 0;
+                overflow-y: auto;
+            }
+            .preview-wrapper {
+                flex: 1;
+                overflow: auto;
+                display: flex;
+                justify-content: center;
+            }
+        }
+
+        /* Print Styles */
+        @media print {
+            body { background: white; display: block; padding: 0; overflow: visible; height: auto; }
+            .form-container { display: none; }
+            .preview-wrapper { padding: 0; background: white; overflow: visible; display: block; }
+            .paper { box-shadow: none; width: 100%; padding: 0; margin: 0; min-height: auto; }
+            @page { margin: 2cm; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- KOLOM INPUT -->
+    <div class="form-container">
+        <h3 style="margin-top:0;">Input Data Surat</h3>
+        
+        <div class="form-group">
+            <label>Upload Logo (Opsional)</label>
+            <input type="file" id="inputLogo" accept="image/*">
+            <!-- Kotak Preview Logo (Baru) -->
+            <div class="logo-preview-box" id="logoPreviewBox">Belum ada logo</div>
+        </div>
+
+        <div class="form-group">
+            <label>Nama Instansi (Baris 1)</label>
+            <input type="text" id="inputInstansi1" placeholder="Contoh: PEMERINTAH PROVINSI...">
+        </div>
+
+        <div class="form-group">
+            <label>Nama Instansi (Baris 2)</label>
+            <input type="text" id="inputInstansi2" placeholder="Contoh: DINAS PENDIDIKAN">
+        </div>
+
+        <div class="form-group">
+            <label>Alamat Lengkap</label>
+            <textarea id="inputAlamat" placeholder="Jl. Contoh No. 123, Kota..."></textarea>
+        </div>
+
+        <div class="form-group">
+            <label>Tanggal Surat</label>
+            <input type="text" id="inputTanggalSurat" placeholder="Contoh: Jakarta, 1 Januari 2024">
+        </div>
+
+        <div class="form-group">
+            <label>Nomor Surat</label>
+            <input type="text" id="inputNomor" placeholder="Contoh: 001/ABC/2024">
+        </div>
+
+        <div class="form-group">
+            <label>Perihal</label>
+            <input type="text" id="inputPerihal" placeholder="Contoh: Undangan Rapat">
+        </div>
+
+        <div class="form-group">
+            <label>Tujuan Surat (Kepada)</label>
+            <input type="text" id="inputTujuan" placeholder="Contoh: Yth. Bapak/Ibu...">
+            <input type="text" id="inputTujuan2" placeholder="di tempat" style="margin-top:5px;">
+        </div>
+
+        <div class="form-group">
+            <label>Isi Surat (Pembuka)</label>
+            <textarea id="inputIsiPembuka" placeholder="Dengan hormat,..."></textarea>
+        </div>
+
+        <div class="form-group">
+            <label>Isi Surat (Penutup)</label>
+            <textarea id="inputIsiPenutup" placeholder="Demikian surat ini kami sampaikan..."></textarea>
+        </div>
+
+        <div class="form-group" style="display:flex; align-items:center;">
+            <input type="checkbox" id="toggleAcara" style="width:auto; margin-right:10px;">
+            <label for="toggleAcara" style="margin:0;">Tampilkan Detail Acara (Tabel)</label>
+        </div>
+
+        <div id="acaraInputs" style="display:none;">
+            <div class="form-group">
+                <label>Tanggal Pelaksanaan</label>
+                <input type="text" id="inputTglAcara" placeholder="Contoh: 5 Januari 2024">
+            </div>
+            <div class="form-group">
+                <label>Waktu</label>
+                <input type="text" id="inputWaktu" placeholder="Contoh: 09.00 - Selesai">
+            </div>
+            <div class="form-group">
+                <label>Tempat</label>
+                <input type="text" id="inputTempat" placeholder="Contoh: Ruang Rapat Utama">
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label>Jabatan Penandatangan</label>
+            <input type="text" id="inputJabatan" placeholder="Contoh: Kepala Dinas">
+        </div>
+
+        <div class="form-group">
+            <label>Nama Penandatangan</label>
+            <input type="text" id="inputNama" placeholder="Nama Lengkap">
+        </div>
+
+        <button onclick="window.print()">Cetak / Simpan PDF</button>
+        <br><br>
+    </div>
+
+    <!-- KOLOM PREVIEW -->
+    <div class="preview-wrapper">
+        <div class="paper" id="suratPreview">
+            
+            <div class="letterhead">
+                <div class="logo-box" id="logoContainer"></div>
+                <div class="header-text">
+                    <h1 id="previewInstansi1"></h1>
+                    <h2 id="previewInstansi2"></h2>
+                    <p id="previewAlamat"></p>
+                </div>
+            </div>
+
+            <div class="date-line">
+                <span id="previewTanggalSurat"></span>
+            </div>
+
+            <div class="letter-info">
+                <table>
+                    <tr>
+                        <td>Nomor</td>
+                        <td>: <span id="previewNomor"></span></td>
+                    </tr>
+                    <tr>
+                        <td>Lampiran</td>
+                        <td>: -</td>
+                    </tr>
+                    <tr>
+                        <td>Perihal</td>
+                        <td>: <span id="previewPerihal"></span></td>
+                    </tr>
+                </table>
+            </div>
+
+            <div class="letter-info">
+                <div>Kepada :</div>
+                <div id="previewTujuan"></div>
+                <div id="previewTujuan2"></div>
+            </div>
+
+            <br>
+            <div>Dengan Hormat,</div>
+            <br>
+
+            <div class="content">
+                <p id="previewIsiPembuka"></p>
+                
+                <div class="event-details" id="previewAcaraContainer">
+                    <p class="no-indent" style="margin-bottom: 5px;">Adapun kegiatan ini akan kami selenggarakan pada :</p>
+                    <table>
+                        <tr>
+                            <td>Tanggal</td>
+                            <td>: <span id="previewTglAcara"></span></td>
+                        </tr>
+                        <tr>
+                            <td>Pukul</td>
+                            <td>: <span id="previewWaktu"></span></td>
+                        </tr>
+                        <tr>
+                            <td>Hari</td>
+                            <td>: <span id="previewHari"></span></td>
+                        </tr>
+                        <tr>
+                            <td>Tempat</td>
+                            <td>: <span id="previewTempat"></span></td>
+                        </tr>
+                    </table>
+                </div>
+
+                <p id="previewIsiPenutup"></p>
+            </div>
+
+            <div class="signature">
+                <div id="previewJabatan"></div>
+                <div class="signature-space"></div>
+                <div class="signature-name" id="previewNama"></div>
+            </div>
+            <div style="clear:both;"></div>
+
+        </div>
+    </div>
+
+    <script>
+        function bindInput(inputId, previewId) {
+            const input = document.getElementById(inputId);
+            const preview = document.getElementById(previewId);
+            input.addEventListener('input', () => {
+                if(preview) preview.innerText = input.value;
+            });
+        }
+
+        bindInput('inputInstansi1', 'previewInstansi1');
+        bindInput('inputInstansi2', 'previewInstansi2');
+        bindInput('inputAlamat', 'previewAlamat');
+        bindInput('inputTanggalSurat', 'previewTanggalSurat');
+        bindInput('inputNomor', 'previewNomor');
+        bindInput('inputPerihal', 'previewPerihal');
+        bindInput('inputTujuan', 'previewTujuan');
+        bindInput('inputTujuan2', 'previewTujuan2');
+        bindInput('inputIsiPembuka', 'previewIsiPembuka');
+        bindInput('inputIsiPenutup', 'previewIsiPenutup');
+        bindInput('inputJabatan', 'previewJabatan');
+        bindInput('inputNama', 'previewNama');
+        bindInput('inputTglAcara', 'previewTglAcara');
+        bindInput('inputWaktu', 'previewWaktu');
+        bindInput('inputTempat', 'previewTempat');
+
+        const toggleAcara = document.getElementById('toggleAcara');
+        const previewAcaraContainer = document.getElementById('previewAcaraContainer');
+        const acaraInputs = document.getElementById('acaraInputs');
+
+        toggleAcara.addEventListener('change', function() {
+            if(this.checked) {
+                previewAcaraContainer.style.display = 'block';
+                acaraInputs.style.display = 'block';
+            } else {
+                previewAcaraContainer.style.display = 'none';
+                acaraInputs.style.display = 'none';
+            }
+        });
+
+        // --- LOGIKA UPLOAD LOGO (DIPERBAIKI) ---
+        const inputLogo = document.getElementById('inputLogo');
+        const logoPreviewBox = document.getElementById('logoPreviewBox'); // Kotak di form
+        const logoContainer = document.getElementById('logoContainer');   // Kotak di surat
+
+        inputLogo.addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(event) {
+                    // 1. Tampilkan di Form (Kiri)
+                    logoPreviewBox.innerHTML = `<img src="${event.target.result}" alt="Preview Logo">`;
+                    logoPreviewBox.style.border = '1px solid #ccc';
+                    
+                    // 2. Tampilkan di Surat (Kanan)
+                    logoContainer.innerHTML = `<img src="${event.target.result}" alt="Logo Surat">`;
+                    logoContainer.style.border = 'none'; 
+                };
+                reader.readAsDataURL(file);
+            } else {
+                // Reset jika file dibatalkan
+                logoPreviewBox.innerHTML = 'Belum ada logo';
+                logoPreviewBox.style.border = '1px dashed #ccc';
+                logoContainer.innerHTML = '';
+                logoContainer.style.border = '1px dashed #eee';
+            }
+        });
+    </script>
+</body>
+</html>
